@@ -29,8 +29,36 @@ public:
   ///* state covariance matrix
   MatrixXd P_;
 
-  ///* predicted sigma points matrix
+  ///* augmented sigma points matrix (holds large augmented data)
+  MatrixXd Xsig_aug_;
+
+  ///* predicted sigma points matrix (sigma points after prediction)
   MatrixXd Xsig_pred_;
+
+  ///* predicted sigma points matrix for radar (sigma points after prediction)
+  MatrixXd Zsig_radar_pred_;
+
+  ///* Lidar Measurement Function
+  MatrixXd H_laser_;
+
+  ///* Radar measuerement vector [rho, phi, rho_dot] (predicted)
+  VectorXd z_radar_pred_;
+
+  ///* Laser measuerement vector [px, py] (predicted)
+  VectorXd z_laser_pred_;
+
+  ///* Radar covariance matrix
+  MatrixXd S_radar_;
+
+  ///* Radar Kalman Gain
+  MatrixXd K_radar_;
+
+  ///* Radar Noise
+  MatrixXd R_radar_;
+
+  ///* Laser Noise
+  MatrixXd R_laser_;
+
 
   ///* time when the state is true, in us
   long long time_us_;
@@ -65,6 +93,12 @@ public:
   ///* Augmented state dimension
   int n_aug_;
 
+  ///* Radar meas dimension
+  int n_z_radar_;
+
+  ///* Laser meas dimension
+  int n_z_laser_;
+
   ///* Sigma point spreading parameter
   double lambda_;
 
@@ -84,6 +118,13 @@ public:
    */
   virtual ~UKF();
 
+  //////////////////////////////////////////////////UKF Filter Steps
+
+  /**
+  * Initialize Filter
+  */
+  void Init(MeasurementPackage &meas_package);
+
   /**
    * ProcessMeasurement
    * @param meas_package The latest measurement data of either radar or laser
@@ -91,23 +132,63 @@ public:
   void ProcessMeasurement(MeasurementPackage meas_package);
 
   /**
-   * Prediction Predicts sigma points, the state, and the state covariance
-   * matrix
-   * @param delta_t Time between k and k+1 in s
-   */
+  * Prediction Predicts sigma points, the state, and the state covariance
+  * matrix
+  * @param delta_t Time between k and k+1 in s
+  */
   void Prediction(double delta_t);
 
   /**
-   * Updates the state and the state covariance matrix using a laser measurement
-   * @param meas_package The measurement at k+1
-   */
-  void UpdateLidar(MeasurementPackage meas_package);
+  * Updates the state and the state covariance matrix using a laser measurement
+  * @param meas_package The measurement at k+1
+  */
+  void UpdateLidar(VectorXd z);
 
   /**
-   * Updates the state and the state covariance matrix using a radar measurement
-   * @param meas_package The measurement at k+1
-   */
-  void UpdateRadar(MeasurementPackage meas_package);
+  * Updates the state and the state covariance matrix using a radar measurement
+  * @param meas_package The measurement at k+1
+  */
+  void UpdateRadar(VectorXd z);
+  /////////////////////////////////////////////////UKF Filter Steps
+
+
+  //////////////////////////////////////////////UKF Filter Implementation
+
+  /**
+   * GenerateSigmaPoints
+  */
+  void GenerateSigmaPoints();
+
+  /**
+  * PredictSigmaPoints
+  */
+  void PredictSigmaPoints(double dt);
+
+  /**
+  * CalculateWeights
+  */
+  void CalculateWeights();
+
+  /**
+  * Calculate Mean and Covariance for the prediction step
+  */
+  void CalculateMeanCovariance_State();
+
+  /**
+  * Calculate Mean and Covariance for the Radar measurements
+  */
+  void CalculateMeanCovariance_Radar();
+
+  /**
+  * Calculate Kalman Gain for Radar
+  */
+  void CalculateKalmanGain_Radar();
+  
+  /**
+  * A helper method to calculate NIS. (Normalized Innovation Squared)
+  */
+  double CalculateNIS(const VectorXd &diff_meas, const MatrixXd &S);
+  /////////////////////////////////////////////////UKF Filter Implementation
 };
 
 #endif /* UKF_H */
