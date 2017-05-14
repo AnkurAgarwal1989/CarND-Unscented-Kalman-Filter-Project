@@ -82,14 +82,6 @@ UKF::UKF() {
 
   // Radar measurement noise standard deviation radius change in m/s
   std_radrd_ = 0.3;
-
-  /**
-  TODO:
-
-  Complete the initialization. See ukf.h for other member properties.
-
-  Hint: one or more values initialized above might be wildly off...
-  */
 }
 
 UKF::~UKF() {}
@@ -187,7 +179,6 @@ void UKF::PredictSigmaPoints(double dt) {
 * Each sigma point has some weihht associated with it.
 * w0 = lambda/(n_sigma + lambda)
 * W_others = 1/2*(n_sigma + lambda)
-
 */
 void UKF::CalculateWeights() {
   //Number of sigma points = 2*n_aug + 1
@@ -432,8 +423,7 @@ void UKF::UpdateLidar(VectorXd z) {
   MatrixXd S = H_laser_*PHt + R_laser_;
   MatrixXd K = PHt*S.inverse();
 
-  long x_size = x_.size();
-  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  MatrixXd I = MatrixXd::Identity(n_x_, n_x_);
   x_ = x_ + K*y;
   P_ = (I - K*H_laser_)*P_;
 
