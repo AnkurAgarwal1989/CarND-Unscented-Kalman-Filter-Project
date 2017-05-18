@@ -3,3 +3,6 @@
 
 # build files
 build/
+
+#Unix and VS Build files
+*_build_*/
