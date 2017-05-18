@@ -92,6 +92,20 @@ Begin
 /************************************************************************/
 
 /**
+  * Normalize angle to [-pi, pi]
+ */
+void UKF::NormalizeAngle(double& angle) {
+  //Bring to [0,2pi]
+  angle = fmod(angle, 2 * M_PI);
+  //if angle is negative, add 2*M_PI
+  if (angle < 0)
+    angle = fmod((angle + (2 * M_PI)), 2 * M_PI);
+  //Bring to (-180, 180]
+  if (angle > M_PI)
+    angle -= 2 * M_PI;
+
+}
+/**
  * Generates a matrix of augmeneted sigma points from the current state.
  * The process matrix will be augmented to add noise.
  * 
@@ -214,8 +228,7 @@ void UKF::CalculateMeanCovariance_State() {
     //As simple trick is to use atan2(as it is always returns [-pi, +pi]
     //phi is ind 3
     //angle normalization
-    while (x_diff_temp(3)> M_PI) x_diff_temp(3) -= 2.*M_PI;
-    while (x_diff_temp(3)<-M_PI) x_diff_temp(3) += 2.*M_PI;
+    NormalizeAngle(x_diff_temp(3));
     P_ += weights_(i) * x_diff_temp * x_diff_temp.transpose();
   }
   //cout << "Mean State " << endl;
@@ -265,8 +278,8 @@ void UKF::CalculateMeanCovariance_Radar()
   for (int i = 0; i < 2*n_aug_  + 1; ++i) {
     z_diff_temp = Zsig_radar_pred_.col(i) - z_radar_pred_;
     //angle normalization
-    while (z_diff_temp(1)> M_PI) z_diff_temp(1) -= 2.*M_PI;
-    while (z_diff_temp(1)<-M_PI) z_diff_temp(1) += 2.*M_PI;
+    NormalizeAngle(z_diff_temp(1));
+    
     S_radar_ += weights_(i) * z_diff_temp * z_diff_temp.transpose();
   }
 
@@ -287,14 +300,12 @@ void UKF::CalculateKalmanGain_Radar()
                                              //residual
     VectorXd z_diff = Zsig_radar_pred_.col(i) - z_radar_pred_;
     //angle normalization
-    while (z_diff(1)> M_PI) z_diff(1) -= 2.*M_PI;
-    while (z_diff(1)<-M_PI) z_diff(1) += 2.*M_PI;
+    NormalizeAngle(z_diff(1));
 
     // state difference
     VectorXd x_diff = Xsig_pred_.col(i) - x_;
     //angle normalization
-    while (x_diff(3)> M_PI) x_diff(3) -= 2.*M_PI;
-    while (x_diff(3)<-M_PI) x_diff(3) += 2.*M_PI;
+    NormalizeAngle(x_diff(3));
 
     Tc += weights_(i) * x_diff * z_diff.transpose();
   }
@@ -454,8 +465,8 @@ void UKF::UpdateRadar(VectorXd z) {
   P_ = P_ - K_radar_*S_radar_*K_radar_.transpose();
 
   //Normalize angle phi
-  while (y(1)> M_PI) y(1) -= 2.*M_PI;
-  while (y(1)<-M_PI) y(1) += 2.*M_PI;
+  NormalizeAngle(y(1));
+
   //Calculate NIS
   NIS_radar_ = CalculateNIS(y, S_radar_);
   cout << "Radar NIS: " << NIS_radar_ << endl << endl;

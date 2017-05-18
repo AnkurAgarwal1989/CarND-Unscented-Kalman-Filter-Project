@@ -155,6 +155,11 @@ public:
   //////////////////////////////////////////////UKF Filter Implementation
 
   /**
+   * NormalizeAngle
+   */
+  void NormalizeAngle(double& angle);
+
+  /**
    * GenerateSigmaPoints
   */
   void GenerateSigmaPoints();
